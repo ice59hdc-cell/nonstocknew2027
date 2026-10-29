@@ -24,7 +24,7 @@ digits.forEach((d, i) => {
     else if (e.key === 'ArrowRight' && i < digits.length - 1) digits[i + 1].focus();
   });
   d.addEventListener('focus', () => d.select());
-  d.addEventListener('paste', e => {  // วางทั้ง 6 หลักได้
+  d.addEventListener('paste', e => {  // วางทั้ง 5 หลักได้
     const t = (e.clipboardData.getData('text') || '').replace(/\D/g, '').slice(0, digits.length - i);
     if (!t) return;
     e.preventDefault();
@@ -49,7 +49,7 @@ function target() {
 form.onsubmit = async e => {
   e.preventDefault();
   clearInvalid();
-  if (!/^\d{6}$/.test(pin())) return showErr('กรอก PIN ให้ครบ 6 หลัก', digits.find(d => !d.value) || digits[0]);
+  if (!/^\d{5}$/.test(pin())) return showErr('กรอก PIN ให้ครบ 5 หลัก', digits.find(d => !d.value) || digits[0]);
   go.disabled = true; go.textContent = 'กำลังตรวจสอบ…';
   try {
     const r = await fetch('/api/login', {

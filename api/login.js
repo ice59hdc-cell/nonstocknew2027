@@ -21,7 +21,7 @@ export default async function handler(req, res) {
   let body = req.body;
   if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
   const pin = typeof body?.pin === 'string' ? body.pin : '';
-  if (!PIN_RE.test(pin)) return send(res, 400, { error: 'กรอก PIN 6 หลักให้ครบ' });
+  if (!PIN_RE.test(pin)) return send(res, 400, { error: 'กรอก PIN 5 หลักให้ครบ' });
 
   try {
     const q = db();

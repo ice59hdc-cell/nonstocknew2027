@@ -188,7 +188,7 @@ function txnForm(rec) {
   openForm({
     title: isNew ? 'เพิ่มรายการรายเดือน' : `แก้ไขรายการ: ${um.get(uid0)?.name || uid0}`,
     html: `
-      ${isNew ? `<label>ค้นหาด้วย PIIN (5 หลัก)<input name="piin" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="เช่น 96000"></label>
+      ${isNew ? `<label>ค้นหาด้วย PIIN (5 หลัก)<input name="piin" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="เช่น 12345"></label>
       <p class="calc" id="fdPiin" aria-live="polite"></p>` : ''}
       <label><span>หน่วยบริการ <span class="req">*</span></span><select name="uid" required data-msg="กรุณาเลือกหน่วยบริการ"${lockKey}>${unitOpts}</select></label>
       <div class="two">
@@ -276,7 +276,7 @@ function unitForm(u) {
     html: `
       <div class="two">
         <label>รหัสหน่วย<input name="id" type="text" value="${esc(id)}" disabled></label>
-        <label>PIIN (5 หลัก)<input name="piin" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="เช่น 96000" value="${esc(u?.piin || '')}"></label>
+        <label>PIIN (5 หลัก)<input name="piin" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="เช่น 12345" value="${esc(u?.piin || '')}"></label>
       </div>
       <label><span>ชื่อหน่วยบริการ <span class="req">*</span></span><input name="name" type="text" required maxlength="80" data-msg="กรุณากรอกชื่อหน่วยบริการ" value="${esc(u?.name || '')}"></label>
       <div class="two">
