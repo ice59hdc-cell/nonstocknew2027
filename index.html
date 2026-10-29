@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>แดชบอร์ดคลังยา รพ.สต. จังหวัดนราธิวาส</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">ข้ามไปเนื้อหาหลัก</a>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <h1>แดชบอร์ดคลังยา รพ.สต.</h1>
+      <p class="sub" id="orgName"></p>
+    </div>
+    <div class="top-actions">
+      <span class="stamp" id="stamp"></span>
+      <button class="btn" id="themeBtn" type="button" aria-pressed="false">โหมดมืด</button>
+    </div>
+  </div>
+  <nav class="tabs" aria-label="เมนูหลัก">
+    <a href="#/dashboard" id="navDash" aria-current="page">แดชบอร์ด</a>
+    <a href="#/entry" id="navEntry">บันทึกข้อมูล</a>
+  </nav>
+</header>
+
+<section class="filters" aria-label="ตัวกรองข้อมูล">
+  <div class="filters-inner">
+    <label>ปีงบประมาณ
+      <select id="fFy"></select>
+    </label>
+    <label>ตั้งแต่เดือน
+      <select id="fFrom"></select>
+    </label>
+    <label>ถึงเดือน
+      <select id="fTo"></select>
+    </label>
+    <label>อำเภอ
+      <select id="fDist"></select>
+    </label>
+    <label>สังกัด
+      <select id="fAff"></select>
+    </label>
+    <label class="grow">ค้นหาหน่วยบริการ
+      <input id="fQ" type="search" placeholder="เช่น รพ.สต.พร่อน" autocomplete="off">
+    </label>
+    <label>ไฮไลต์แดงเมื่อสำรองเกิน (เดือน)
+      <input id="fHot" type="number" min="0" step="0.5" inputmode="decimal">
+    </label>
+    <label class="check">
+      <input id="fOnlyHot" type="checkbox">
+      <span>เฉพาะหน่วยที่เกิน</span>
+    </label>
+    <label class="check">
+      <input id="fAnom" type="checkbox" checked>
+      <span>ตัดค่าผิดปกติออก <span class="muted" id="anomCount"></span></span>
+    </label>
+    <button class="btn ghost" id="clearBtn" type="button">ล้างตัวกรอง</button>
+  </div>
+  <div class="chips" id="chips" aria-live="polite"></div>
+</section>
+
+<main id="main" class="view">
+  <section class="kpis" id="kpis" aria-label="ตัวชี้วัดหลัก"></section>
+
+  <section class="insights" aria-labelledby="insH">
+    <h2 id="insH">สิ่งที่ควรรู้จากข้อมูลช่วงนี้</h2>
+    <ul id="insights"></ul>
+  </section>
+
+  <section class="grid g2">
+    <article class="card">
+      <header><h2>มูลค่าคงคลังและเบิกจ่ายรายเดือน</h2><p class="hint">บาท · แท่งสีเข้ม = เดือนที่อยู่ในช่วงที่เลือก</p></header>
+      <div class="chart tall"><canvas id="cTrend" role="img" aria-label="กราฟแท่งมูลค่าคงคลังและมูลค่าเบิกจ่ายรายเดือน"></canvas></div>
+    </article>
+    <article class="card">
+      <header><h2>อัตราสำรองยารายเดือน</h2><p class="hint">เดือนของยาที่เหลือ = คงคลัง ÷ เบิกจ่าย · แถบเขียว = เกณฑ์ 2–3 เดือน</p></header>
+      <div class="chart tall"><canvas id="cReserve" role="img" aria-label="กราฟเส้นอัตราสำรองยารายเดือนเทียบเกณฑ์ 2 ถึง 3 เดือน"></canvas></div>
+    </article>
+  </section>
+
+  <section class="grid g3">
+    <article class="card">
+      <header><h2>การรายงานรายเดือน</h2><p class="hint">จำนวนหน่วยบริการ</p></header>
+      <div class="chart"><canvas id="cReport" role="img" aria-label="กราฟแท่งซ้อนสถานะการรายงานของหน่วยบริการรายเดือน"></canvas></div>
+    </article>
+    <article class="card">
+      <header><h2>หน่วยบริการแยกตามระดับสำรอง</h2><p class="hint">คลิกแท่งเพื่อกรองตารางด้านล่าง</p></header>
+      <div class="chart"><canvas id="cBand" role="img" aria-label="กราฟแท่งจำนวนหน่วยบริการแยกตามระดับอัตราสำรอง"></canvas></div>
+    </article>
+    <article class="card">
+      <header>
+        <h2>เปรียบเทียบรายอำเภอ</h2>
+        <div class="seg" role="group" aria-label="ตัวชี้วัดรายอำเภอ" id="distMetric"></div>
+      </header>
+      <p class="hint">คลิกแท่งเพื่อกรองเฉพาะอำเภอ</p>
+      <div class="chart"><canvas id="cDist" role="img" aria-label="กราฟแท่งเปรียบเทียบรายอำเภอ"></canvas></div>
+    </article>
+  </section>
+
+  <section class="card" aria-labelledby="tblH">
+    <header class="row">
+      <div>
+        <h2 id="tblH">หน่วยบริการ</h2>
+        <p class="hint" id="tblSub"></p>
+      </div>
+      <button class="btn" id="csvBtn" type="button">ดาวน์โหลด CSV</button>
+    </header>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="ตารางหน่วยบริการ เลื่อนดูได้">
+      <table id="tbl">
+        <thead></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="kiH">
+    <header><h2 id="kiH">ข้อสังเกตที่บันทึกไว้ในระบบเดิม</h2><p class="hint">จากชีต Key_Insights ในไฟล์ต้นฉบับ</p></header>
+    <ul class="ki" id="kiList"></ul>
+  </section>
+
+  <section class="card notes" aria-labelledby="noteH">
+    <h2 id="noteH">วิธีคำนวณ</h2>
+    <ul>
+      <li><b>เบิกจ่าย (A)</b> รวมทุกเดือนในช่วงที่เลือก · <b>คงคลัง (B)</b> ใช้ยอดของเดือนล่าสุดที่หน่วยรายงาน</li>
+      <li><b>อัตราสำรอง</b> = คงคลัง (B) ÷ เบิกจ่ายเฉลี่ยต่อเดือน มีหน่วยเป็น “เดือน” ถ้าเลือกเดือนเดียวจะเท่ากับ B ÷ A ตามไฟล์ต้นฉบับ</li>
+      <li><b>เกณฑ์</b> เขียว 2–3 เดือน · เหลือง 1–2 หรือ 3–4 เดือน · แดง ต่ำกว่า 1 หรือสูงกว่า 4 เดือน (ชีต KPI_Targets)</li>
+      <li><b>รายงานแล้ว</b> นับจากมีรายการใน Transactions · <b>ล่าช้า</b> ตามชีต Trans_Log (ซิงก์ล่าสุดเมื่อ <span id="syncAt"></span>)</li>
+      <li><b>ค่าผิดปกติ</b> คือรายการที่อัตราสำรองเกิน 24 เดือน ซึ่งมักเกิดจากยอดเบิกจ่ายต่ำผิดปกติ ตัดออกจากการคำนวณเมื่อเปิดตัวกรอง แต่ยังนับเป็น “รายงานแล้ว”</li>
+    </ul>
+  </section>
+</main>
+
+<main id="entryMain" class="view" hidden>
+  <section class="card" aria-labelledby="enH">
+    <header class="row">
+      <div>
+        <h2 id="enH">บันทึกข้อมูล</h2>
+        <p class="hint">เพิ่ม แก้ไข ลบ ข้อมูลรายเดือนและหน่วยบริการ ผลจะแสดงในแดชบอร์ดทันที ข้อมูลเก็บไว้ในเบราว์เซอร์ของเครื่องนี้</p>
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="enBackup" type="button">สำรองข้อมูล (JSON)</button>
+        <button class="btn" id="enRestore" type="button">กู้คืนจากไฟล์</button>
+        <input id="enFile" type="file" accept="application/json,.json" hidden>
+        <button class="btn danger" id="enReset" type="button">คืนค่าเริ่มต้น</button>
+      </div>
+    </header>
+    <div class="banner" id="enStale" role="status" hidden>ไฟล์ข้อมูลต้นฉบับ (data.js) ใหม่กว่าข้อมูลที่แก้ไขไว้ในเครื่องนี้ ถ้าต้องการใช้ข้อมูลใหม่ให้กด “คืนค่าเริ่มต้น” (รายการที่แก้ไขไว้จะหาย ควรสำรองก่อน)</div>
+    <div class="seg" role="group" aria-label="ประเภทข้อมูล" id="enTabs">
+      <button type="button" data-tab="txn" aria-pressed="true">รายการรายเดือน</button>
+      <button type="button" data-tab="unit" aria-pressed="false">หน่วยบริการ</button>
+    </div>
+  </section>
+
+  <section class="card" id="panelTxn" aria-labelledby="ptH">
+    <header class="row">
+      <h2 id="ptH">รายการรายเดือน <span class="muted" id="ptCount"></span></h2>
+      <button class="btn primary" id="txnAdd" type="button">+ เพิ่มรายการ</button>
+    </header>
+    <div class="toolbar">
+      <label>ปีงบประมาณ<select id="tFy"></select></label>
+      <label>เดือน<select id="tM"></select></label>
+      <label>อำเภอ<select id="tDist"></select></label>
+      <label>แสดง<select id="tFlag">
+        <option value="">ทั้งหมด</option><option value="hot">สำรองเกินเกณฑ์ไฮไลต์</option><option value="late">รายงานล่าช้า</option><option value="anom">ค่าผิดปกติ</option>
+      </select></label>
+      <label class="grow">ค้นหาหน่วยบริการ<input id="tQ" type="search" autocomplete="off" placeholder="ชื่อหน่วย"></label>
+    </div>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="ตารางรายการรายเดือน เลื่อนดูได้">
+      <table id="txnTbl">
+        <thead><tr><th scope="col">หน่วยบริการ</th><th scope="col">อำเภอ</th><th scope="col">เดือน</th><th scope="col" class="num">เบิกจ่าย (A)</th><th scope="col" class="num">คงคลัง (B)</th><th scope="col" class="num">สำรอง (เดือน)</th><th scope="col">สถานะ</th><th scope="col"><span class="sr">จัดการ</span></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="pager" id="txnPager"></div>
+  </section>
+
+  <section class="card" id="panelUnit" aria-labelledby="puH" hidden>
+    <header class="row">
+      <h2 id="puH">หน่วยบริการ <span class="muted" id="puCount"></span></h2>
+      <button class="btn primary" id="unitAdd" type="button">+ เพิ่มหน่วยบริการ</button>
+    </header>
+    <div class="toolbar">
+      <label class="grow">ค้นหา<input id="uQ" type="search" autocomplete="off" placeholder="ชื่อหน่วยหรืออำเภอ"></label>
+      <label class="check"><input id="uActive" type="checkbox"><span>แสดงเฉพาะที่ปิดใช้งาน</span></label>
+    </div>
+    <div class="tbl-wrap" tabindex="0" role="region" aria-label="ตารางหน่วยบริการ เลื่อนดูได้">
+      <table id="unitTbl">
+        <thead><tr><th scope="col">รหัส</th><th scope="col">ชื่อหน่วยบริการ</th><th scope="col">อำเภอ</th><th scope="col">สังกัด</th><th scope="col" class="num">รายการ</th><th scope="col">สถานะ</th><th scope="col"><span class="sr">จัดการ</span></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<dialog id="formDlg" class="modal" aria-labelledby="fdTitle">
+  <form id="fdForm" method="dialog" novalidate>
+    <h2 id="fdTitle"></h2>
+    <div id="fdBody" class="fields"></div>
+    <p class="err" id="fdErr" role="alert" hidden></p>
+    <div class="dlg-actions">
+      <button class="btn" type="button" id="fdCancel">ยกเลิก</button>
+      <button class="btn primary" type="submit" id="fdOk">บันทึก</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="cfmDlg" class="modal small" aria-labelledby="cfTitle">
+  <h2 id="cfTitle"></h2>
+  <p id="cfBody"></p>
+  <div class="dlg-actions">
+    <button class="btn" type="button" id="cfNo">ยกเลิก</button>
+    <button class="btn danger" type="button" id="cfYes">ตกลง</button>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toastMsg"></span><button class="btn" type="button" id="toastUndo" hidden>เลิกทำ</button></div>
+
+<dialog id="drawer" aria-labelledby="drTitle">
+  <div class="dr-head">
+    <div>
+      <h2 id="drTitle"></h2>
+      <p class="sub" id="drSub"></p>
+    </div>
+    <button class="btn" id="drClose" type="button" aria-label="ปิดรายละเอียด">ปิด</button>
+  </div>
+  <div class="dr-kpis" id="drKpis"></div>
+  <div class="chart"><canvas id="cUnit" role="img" aria-label="กราฟคงคลังและเบิกจ่ายรายเดือนของหน่วยบริการ"></canvas></div>
+  <div class="tbl-wrap short">
+    <table id="drTbl"><thead><tr><th>เดือน</th><th class="num">เบิกจ่าย (A)</th><th class="num">คงคลัง (B)</th><th class="num">สำรอง (เดือน)</th><th>สถานะ</th></tr></thead><tbody></tbody></table>
+  </div>
+</dialog>
+
+<script src="vendor/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<script src="store.js"></script>
+<script src="app.js"></script>
+<script src="entry.js"></script>
+</body>
+</html>
