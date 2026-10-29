@@ -132,7 +132,7 @@ function txnRows() {
     if (tf.fy && String(t[0]) !== tf.fy) return false;
     if (tf.m && String(t[1]) !== tf.m) return false;
     if (tf.dist && u.district !== tf.dist) return false;
-    if (tf.q && !u.name.toLowerCase().includes(tf.q)) return false;
+    if (tf.q && !u.name.toLowerCase().includes(tf.q) && !(u.piin || '').includes(tf.q)) return false;
     if (tf.flag === 'hot' && !A.isHot(t[5])) return false;
     if (tf.flag === 'late' && !S.isLate(t[0], t[1], t[2])) return false;
     if (tf.flag === 'anom' && !(t[5] != null && t[5] > A.ANOM)) return false;
@@ -184,9 +184,12 @@ function txnForm(rec) {
   const unitOpts = '<option value="">เลือกหน่วยบริการ</option>' + [...byDist.entries()].sort((x, y) => x[0].localeCompare(y[0], 'th'))
     .map(([d, us]) => `<optgroup label="${esc(d)}">${us.sort((x, y) => x.name.localeCompare(y.name, 'th')).map(u => opt(u.id, u.name, u.id === uid0)).join('')}</optgroup>`).join('');
   const lockKey = isNew ? '' : ' disabled';
+  let lastPiin = '';
   openForm({
     title: isNew ? 'เพิ่มรายการรายเดือน' : `แก้ไขรายการ: ${um.get(uid0)?.name || uid0}`,
     html: `
+      ${isNew ? `<label>ค้นหาด้วย PIIN (5 หลัก)<input name="piin" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="เช่น 96000"></label>
+      <p class="calc" id="fdPiin" aria-live="polite"></p>` : ''}
       <label><span>หน่วยบริการ <span class="req">*</span></span><select name="uid" required data-msg="กรุณาเลือกหน่วยบริการ"${lockKey}>${unitOpts}</select></label>
       <div class="two">
         <label><span>ปีงบประมาณ (พ.ศ.) <span class="req">*</span></span><select name="fy" required${lockKey}>${fyChoices().map(f => opt(f, f, f === fy0)).join('')}</select></label>
@@ -200,6 +203,16 @@ function txnForm(rec) {
       <label class="check"><input name="late" type="checkbox"${!isNew && S.isLate(fy0, m0, uid0) ? ' checked' : ''}><span>รายงานล่าช้า</span></label>
       <label>หมายเหตุ<input name="note" type="text" maxlength="200" value="${esc(note0 || '')}"></label>`,
     onInput: f => {
+      if (f.piin) {
+        const p = f.piin.value = f.piin.value.replace(/\D/g, ''), el = $('fdPiin');
+        if (p !== lastPiin) {
+          lastPiin = p;
+          const hit = p.length === 5 ? S.unitByPiin(p) : null;
+          if (hit && !hit.active) { el.textContent = `PIIN ${p} คือ ${hit.name} แต่หน่วยนี้ปิดใช้งานอยู่`; }
+          else if (hit) { f.uid.value = hit.id; el.textContent = `PIIN ${p} → ${hit.name} (อ.${hit.district})`; }
+          else el.textContent = p.length === 5 ? `ไม่พบหน่วยบริการที่มี PIIN ${p} (ตั้ง PIIN ได้ที่แท็บหน่วยบริการ)` : '';
+        }
+      }
       const a = parseFloat(f.A.value), b = parseFloat(f.B.value), el = $('fdCalc');
       if (!(a >= 0) || !(b >= 0)) { el.textContent = 'อัตราสำรอง = คงคลัง ÷ เบิกจ่าย (คำนวณอัตโนมัติ)'; el.className = 'calc'; return; }
       const c = S.calcC(a, b);
@@ -226,15 +239,15 @@ $('uActive').onchange = e => { uf.inactive = e.target.checked; renderUnits(); };
 function renderUnits() {
   const counts = new Map();
   S.txns().forEach(t => counts.set(t[2], (counts.get(t[2]) || 0) + 1));
-  const rows = S.units().filter(u => (!uf.q || u.name.toLowerCase().includes(uf.q) || u.district.toLowerCase().includes(uf.q)) && (!uf.inactive || !u.active))
+  const rows = S.units().filter(u => (!uf.q || u.name.toLowerCase().includes(uf.q) || (u.piin || '').includes(uf.q) || u.district.toLowerCase().includes(uf.q)) && (!uf.inactive || !u.active))
     .sort((a, b) => a.id.localeCompare(b.id));
   $('puCount').textContent = `(${rows.length} จาก ${S.units().length} หน่วย)`;
   $('unitTbl').querySelector('tbody').innerHTML = rows.length ? rows.map(u => `<tr>
-    <td>${esc(u.id)}</td><td>${esc(u.name)}</td><td>${esc(u.district)}</td><td>${esc(u.aff)}</td><td class="num">${counts.get(u.id) || 0}</td>
+    <td>${esc(u.id)}</td><td>${esc(u.piin || '–')}</td><td>${esc(u.name)}</td><td>${esc(u.district)}</td><td>${esc(u.aff)}</td><td class="num">${counts.get(u.id) || 0}</td>
     <td>${u.active ? 'ใช้งาน' : '<span class="pill none">ปิดใช้งาน</span>'}</td>
     <td class="acts"><button class="btn sm" type="button" data-act="edit" data-id="${esc(u.id)}" aria-label="แก้ไข ${esc(u.name)}">แก้ไข</button>
     <button class="btn sm danger-o" type="button" data-act="del" data-id="${esc(u.id)}" aria-label="ลบ ${esc(u.name)}">ลบ</button></td></tr>`).join('')
-    : '<tr class="empty"><td colspan="7">ไม่พบหน่วยบริการ</td></tr>';
+    : '<tr class="empty"><td colspan="8">ไม่พบหน่วยบริการ</td></tr>';
 }
 $('unitAdd').onclick = () => unitForm(null);
 $('unitTbl').addEventListener('click', async e => {
@@ -261,7 +274,10 @@ function unitForm(u) {
   openForm({
     title: isNew ? 'เพิ่มหน่วยบริการ' : `แก้ไขหน่วยบริการ: ${u.name}`,
     html: `
-      <label>รหัสหน่วย<input name="id" type="text" value="${esc(id)}" disabled></label>
+      <div class="two">
+        <label>รหัสหน่วย<input name="id" type="text" value="${esc(id)}" disabled></label>
+        <label>PIIN (5 หลัก)<input name="piin" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="เช่น 96000" value="${esc(u?.piin || '')}"></label>
+      </div>
       <label><span>ชื่อหน่วยบริการ <span class="req">*</span></span><input name="name" type="text" required maxlength="80" data-msg="กรุณากรอกชื่อหน่วยบริการ" value="${esc(u?.name || '')}"></label>
       <div class="two">
         <label><span>อำเภอ <span class="req">*</span></span><input name="district" type="text" list="dlDist" required maxlength="40" data-msg="กรุณากรอกอำเภอ" value="${esc(u?.district || '')}"><datalist id="dlDist">${dists.map(d => `<option value="${esc(d)}">`).join('')}</datalist></label>
@@ -269,7 +285,7 @@ function unitForm(u) {
       </div>
       <label class="check"><input name="active" type="checkbox"${!u || u.active ? ' checked' : ''}><span>ใช้งาน (ถ้าปิด จะไม่แสดงในแดชบอร์ด)</span></label>`,
     onSubmit: f => {
-      const r = S.upsertUnit({ id, name: f.name.value, district: f.district.value, aff: f.aff.value, active: f.active.checked }, isNew);
+      const r = S.upsertUnit({ id, piin: f.piin.value, name: f.name.value, district: f.district.value, aff: f.aff.value, active: f.active.checked }, isNew);
       if (r.error) return r.error;
       renderEntry();
       toast(isNew ? 'เพิ่มหน่วยบริการแล้ว' : 'บันทึกการแก้ไขแล้ว');

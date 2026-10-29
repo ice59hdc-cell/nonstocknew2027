@@ -87,14 +87,19 @@ window.Store = (() => {
     upsertUnit(o, isNew) {
       const name = (o.name || '').trim(), district = (o.district || '').trim(), aff = (o.aff || '').trim();
       if (!name || !district || !aff) return { error: 'กรุณากรอกชื่อหน่วย อำเภอ และสังกัด' };
+      const piin = String(o.piin ?? '').trim();
+      if (piin && !/^\d{5}$/.test(piin)) return { error: 'PIIN ต้องเป็นตัวเลข 5 หลัก' };
       if (db.units.some(u => u.id !== o.id && u.name === name)) return { error: 'มีหน่วยบริการชื่อนี้แล้ว' };
+      if (piin && db.units.some(u => u.id !== o.id && u.piin === piin)) return { error: `PIIN ${piin} ถูกใช้กับหน่วยอื่นแล้ว` };
       const i = db.units.findIndex(u => u.id === o.id);
       if (isNew && i >= 0) return { error: 'รหัสหน่วยซ้ำ' };
       if (!isNew && i < 0) return { error: 'ไม่พบหน่วยบริการ' };
       const rec = { id: o.id, name, district, aff, active: !!o.active };
+      if (piin) rec.piin = piin;
       if (isNew) db.units.push(rec); else db.units[i] = rec;
       return { ok: true, saved: persist() };
     },
+    unitByPiin: piin => db.units.find(u => u.piin === piin),
     countTxnsOfUnit: uid => db.txns.filter(t => t[2] === uid).length,
     deleteUnit(uid) {
       const n = db.txns.filter(t => t[2] === uid).length;
@@ -117,7 +122,7 @@ window.Store = (() => {
       if (!s || s.app !== 'drugdash' || !Array.isArray(s.units) || !Array.isArray(s.txns) || !s.units.every(okUnit) || !s.txns.every(okTxn)) {
         return { error: 'ไฟล์นี้ไม่ใช่ไฟล์สำรองของแดชบอร์ดนี้' };
       }
-      db.units = s.units.map(u => ({ id: u.id, name: u.name, district: u.district, aff: u.aff || '', active: u.active !== false }));
+      db.units = s.units.map(u => ({ id: u.id, name: u.name, district: u.district, aff: u.aff || '', active: u.active !== false, ...(/^\d{5}$/.test(u.piin) ? { piin: u.piin } : {}) }));
       db.txns = s.txns; db.late = Array.isArray(s.late) ? s.late : [];
       db.staleBase = false;
       persist();
