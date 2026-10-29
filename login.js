@@ -32,7 +32,6 @@ digits.forEach((d, i) => {
     digits[Math.min(i + t.length, digits.length - 1)].focus();
   });
 });
-$('lgEmail').addEventListener('input', clearInvalid);
 
 $('lgShow').onclick = e => {
   const on = e.target.getAttribute('aria-pressed') !== 'true';
@@ -50,14 +49,12 @@ function target() {
 form.onsubmit = async e => {
   e.preventDefault();
   clearInvalid();
-  const email = $('lgEmail').value.trim();
-  if (!email || !$('lgEmail').checkValidity()) return showErr('กรอกอีเมลให้ถูกต้อง', $('lgEmail'));
   if (!/^\d{6}$/.test(pin())) return showErr('กรอก PIN ให้ครบ 6 หลัก', digits.find(d => !d.value) || digits[0]);
   go.disabled = true; go.textContent = 'กำลังตรวจสอบ…';
   try {
     const r = await fetch('/api/login', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin', body: JSON.stringify({ email, pin: pin() }),
+      credentials: 'same-origin', body: JSON.stringify({ pin: pin() }),
     });
     const j = await r.json().catch(() => ({}));
     if (r.ok) return location.replace(target());
@@ -71,5 +68,5 @@ form.onsubmit = async e => {
 
 // เข้าสู่ระบบอยู่แล้ว → ไปหน้าหลัก
 fetch('/api/me', { credentials: 'same-origin' }).then(r => { if (r.ok) location.replace(target()); }).catch(() => {});
-$('lgEmail').focus();
+digits[0].focus();
 })();

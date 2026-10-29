@@ -3,7 +3,6 @@
 .login-card h1 { color: var(--brand); }
 .login-card form { margin-top: 18px; display: grid; gap: 6px; }
 .login-card label { font-size: .88rem; font-weight: 600; margin-top: 8px; }
-.login-card input[type=email] { font: inherit; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); min-height: 44px; width: 100%; }
 .pin { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .pin-d { font: inherit; font-size: 1.4rem; text-align: center; padding: 0; min-width: 0; height: 52px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); }
 .login-card input:focus-visible { border-color: var(--focus); }
