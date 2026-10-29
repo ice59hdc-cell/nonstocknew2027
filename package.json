@@ -1,0 +1,10 @@
+{
+  "name": "nonstocknew2027",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@vercel/functions": "^3.0.0",
+    "pg": "^8.13.0"
+  }
+}
